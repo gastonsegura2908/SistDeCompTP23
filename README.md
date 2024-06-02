@@ -158,7 +158,7 @@ Observamos que al ejecutar el cmd propuesto por la consigna, obtenemos los sigui
 El mensaje “WARNING: process xxxx exited on signal 11” indica que un proceso finalizó de manera anormal debido a una señal 11. Esta señal se conoce como SIGSEGV (Segmentation Violation) y generalmente ocurre cuando un programa intenta acceder a una ubicación de memoria no válida o no asignada. En otras palabras, el proceso intentó acceder a una parte de la memoria que no le correspondía, lo que puede deberse a un error en el código del programa o a una sobrecarga de memoria.
 
 Observamos la ejecución de los comandos previo a la realización de la imagen main.img.
-!insertar img1
+![Imagen 1](/img/img1.jpg)
 En la vista superior de la ventana de QEMU, hacemos Machine → Pause.
 
 ### Objetivo 2

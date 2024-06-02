@@ -38,17 +38,13 @@ hlt
 section .data
 gdt_start:
 ; Descriptor de código (base = 0, límite = 4 GB, acceso = 0x9A)
-dw 0xFFFF  ; Límite (16 bits más bajos)
-dw 0x0000  ; Base (16 bits más bajos)
-db 0x00    ; Base (8 bits siguientes)
-db 0x9A    ; Tipo de descriptor (código ejecutable, acceso presente, nivel de privilegio 0)
-db 0xCF    ; Límite (4 bits más altos) y atributos (granularidad, tamaño de operando)
+; ...
 
-; Descriptor de datos (base = 0, límite = 4 GB, acceso = 0x92)
+; Descriptor de datos (base = 0, límite = 4 GB, acceso = 0x92, solo lectura)
 dw 0xFFFF  ; Límite (16 bits más bajos)
 dw 0x0000  ; Base (16 bits más bajos)
 db 0x00    ; Base (8 bits siguientes)
 db 0x92    ; Tipo de descriptor (datos, acceso presente, nivel de privilegio 0)
-db 0xCF    ; Límite (4 bits más altos) y atributos (granularidad, tamaño de operando)
+db 0xCF    ; Límite (4 bits más altos) y atributos (granularidad, tamaño de operando, solo lectura)
 
 gdt_end:

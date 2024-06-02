@@ -32,12 +32,12 @@ gdt_start:
         .byte 0b11001111                ; Flags: Granularidad (4 KB), 32-bit, Límite (4 bits altos)
         .byte 0x00                      ; Base del segmento (8 bits altos)
 
-    ; Descriptor de datos (solo lectura)
+    ; Descriptor de datos (lectura/escritura)
     gdt_data:
         .word 0xffff                    ; Límite del segmento (16 bits bajos)
         .word 0x0000                    ; Base del segmento (16 bits bajos)
-        .byte 0x10                      ; Base del segmento (8 bits medios)
-        .byte 0b10010000                ; Flags: Presente, DPL=0, Datos, Solo Lectura
+        .byte 0x00                      ; Base del segmento (8 bits medios)
+        .byte 0b10010010                ; Flags: Presente, DPL=0, Datos, Lectura/Escritura
         .byte 0b11001111                ; Flags: Granularidad (4 KB), 32-bit, Límite (4 bits altos)
         .byte 0x00                      ; Base del segmento (8 bits altos)
 
@@ -70,7 +70,7 @@ protected_mode_detected:
     ; Llamar a la función para imprimir un mensaje
     call print_message
 
-    ; Intentar escribir en el segmento de datos de solo lectura
+    ; Intentar escribir en el segmento de datos
     mov dword [0x00100000], 0xDEADBEEF  ; Esto debería causar una excepción
 
     jmp continue_execution

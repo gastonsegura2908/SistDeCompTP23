@@ -15,7 +15,7 @@ _start:
     mov eax, cr0
     or eax, 0x1
     mov cr0, eax
-    jmp 0x08:modo_protegido
+    jmp short modo_protegido
 
 modo_protegido:
     ; Configurar el descriptor de código

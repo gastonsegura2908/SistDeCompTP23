@@ -484,145 +484,181 @@ Para arrancar un sistema operativo en modo protegido desde el arranque inicial, 
 Como indica la consigna, creamos un codigo assembler que pueda pasar al Modo Protegido, sin utilizar macros.
 ```assembly
 section .text
-global _start
+    global _start
 
 _start:
-; Deshabilitar las interrupciones
-cli
+    ; Cargar el descriptor de segmento de código
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
-; Configurar la GDT (Tabla de Descriptores Globales)
-mov eax, gdt_end - gdt_start - 1
-shl eax, 16
-mov ax, gdt_start
-lgdt [eax]
+    ; Habilitar el bit PE (modo protegido) en el registro CR0
+    mov eax, cr0
+    or eax, 0x1
+    mov cr0, eax
 
-; Cambiar al Modo Protegido
-mov eax, cr0
-or eax, 0x1
-mov cr0, eax
-jmp 0x08:modo_protegido
+    ; Saltar al código en modo protegido
+    jmp 0x08:protected_mode
 
-modo_protegido:
-; Configurar otros segmentos y tablas de paginación
+protected_mode:
+    ; Tu código en modo protegido aquí
 
-; Código en modo protegido continúa desde aca
-
-; Salir del programa
-hlt
-
-section .data
-gdt_start:
-; Descriptores de segmento (código, datos, etc.)
-
-gdt_end:
+    ; Salir del programa
+    mov eax, 1
+    int 0x80
 ```
 
-Este es un programa básico en lenguaje Assembly que configura la Tabla de Descriptores Globales (GDT) y entra en el Modo Protegido en un procesador x86. A continuación su explicacion:
+Este es un programa en lenguaje assembly que permite cambiar de modo real a modo protegido. A continuacion, las explicaciones de sus lineas:
 
-- `global _start` : Esto hace que el símbolo `_start` sea visible desde otros archivos. `_start` es el punto de entrada predeterminado para el vinculador.
-- `_start:` : Esta es la etiqueta de inicio del programa.
-- `cli` : Esta instrucción deshabilita las interrupciones del procesador para prevenir la interrupción del proceso de cambio de modo.
-- `mov eax, gdt_end - gdt_start - 1` : Esto calcula la longitud de la GDT y la almacena en el registro EAX.
-- `shl eax, 16` : Esto desplaza los bits de la longitud de la GDT 16 lugares a la izquierda en el registro EAX.
-- `mov ax, gdt_start` : Esto mueve la dirección de inicio de la GDT al registro AX.
-- `lgdt [eax]` : Esto carga el registro GDTR con la dirección y la longitud de la GDT.
-- `mov eax, cr0` : Esto mueve el contenido del registro CR0 al registro EAX. CR0 es un registro de control que determina el modo de operación y las características del procesador.
-- `or eax, 0x1` : Esto establece el bit menos significativo del registro EAX en 1. Este bit determina si el procesador está en Modo Real (si el bit es 0) o en Modo Protegido (si el bit es 1).
-- `mov cr0, eax` : Esto mueve el contenido del registro EAX al registro CR0, cambiando así el modo del procesador a Modo Protegido.
-- `jmp 0x08:modo_protegido` : Esto salta al código que se ejecutará en Modo Protegido. 0x08 es el selector de segmento para el segmento de código en Modo Protegido.
-- `modo_protegido:` : Esta es la etiqueta para el inicio del código que se ejecutará en Modo Protegido.
-- `hlt` : Esta instrucción detiene la ejecución de la CPU hasta que se recibe la próxima interrupción.
-- `section .data` : Esto define la sección de datos donde se almacenan las variables y constantes utilizadas por el programa.
-- `gdt_start:` : Esta es la etiqueta para el inicio de la GDT.
-- `gdt_end:` : Esta es la etiqueta para el final de la GDT.
+- `section .text`: Esta línea define la sección de texto del programa donde se almacena el código ejecutable.
+- `global _start`: Esta línea hace que el símbolo `_start` sea visible globalmente, lo que significa que puede ser visto y usado por otros archivos además de este.
+- `_start:`: Esta es la etiqueta para el punto de entrada del programa. El enlazador buscará este símbolo para saber por dónde empezar a ejecutar el programa.
+- `mov ax, 0x10`: Esta línea carga el valor `0x10` en el registro `AX`. Este valor se utilizará para cargar los descriptores de segmento.
+- `mov ds, ax`, `mov es, ax`, `mov fs, ax`, `mov gs, ax`: Estas líneas cargan el valor en `AX` (que es `0x10`) en los registros de segmento `DS`, `ES`, `FS` y `GS`.
+- `mov eax, cr0`: Esta línea carga el contenido del registro de control `CR0` en `EAX`.
+- `or eax, 0x1`: Esta línea establece el bit más bajo de `EAX` a 1. Esto se hace para habilitar el bit PE (modo protegido) en `CR0`.
+- `mov cr0, eax`: Esta línea escribe el valor de `EAX` de nuevo en `CR0`, habilitando así el modo protegido.
+- `jmp 0x08:protected_mode`: Esta línea realiza un salto a la etiqueta `protected_mode`. El `0x08` es el selector de segmento para el segmento de código en modo protegido.
+- `protected_mode:`: Esta es la etiqueta para el código que se ejecutará en modo protegido.
+- `mov eax, 1`: Esta línea carga el valor `1` en `EAX`. Este valor se utiliza para la interrupción `0x80`, que se utiliza para las llamadas al sistema en Linux.
+- `int 0x80`: Esta línea genera la interrupción `0x80`, que en este caso se utiliza para terminar el programa.
 
 
 Un programa que tenga dos descriptores de memoria diferentes, uno para cada segmento (código y datos) en espacios de memoria diferenciados, siguiendo nuestro formato anterior, se vería de la siguiente forma:
 ```assembly
 section .text
-global _start
+    global _start
 
 _start:
-; Deshabilitar interrupciones
-cli
+    ; Cargar el descriptor de segmento de código
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
-; Configurar la GDT (Tabla de Descriptores Globales)
-mov eax, gdt_end - gdt_start - 1
-shl eax, 16
-mov ax, gdt_start
-lgdt [eax]
+    ; Habilitar el bit PE (modo protegido) en el registro CR0
+    mov eax, cr0
+    or eax, 0x1
+    mov cr0, eax
 
-; Cambiar al Modo Protegido
-mov eax, cr0
-or eax, 0x1
-mov cr0, eax
-jmp 0x08:modo_protegido
+    ; Saltar al código en modo protegido
+    jmp 0x08:protected_mode
 
-modo_protegido:
-; Configurar el descriptor de código
-mov ax, 0x10
-mov ds, ax
-mov es, ax
-mov fs, ax
-mov gs, ax
+protected_mode:
+    ; Cambiar los bits de acceso del segmento de datos a solo lectura
+    ; Esto se hace modificando el descriptor de segmento correspondiente en la GDT
+    ; Por simplicidad, asumiremos que el descriptor de datos está en el índice 0x18 en la GDT
 
-; Configurar el descriptor de datos
-mov ax, 0x18
-mov ss, ax
+    ; Cargar el selector de segmento de datos
+    mov ax, 0x18
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
-; Código en modo protegido continúa desde aca
+    ; Intentar escribir en el segmento de datos (esto generará una excepción)
+    mov dword [my_variable], 42
 
-; Salir del programa
-hlt
+    ; Código en modo protegido
+
+    ; Salir del programa
+    mov eax, 1
+    int 0x80
 
 section .data
-gdt_start:
-; Descriptor de código (base = 0, límite = 4 GB, acceso = 0x9A)
-dw 0xFFFF  ; Límite (16 bits más bajos)
-dw 0x0000  ; Base (16 bits más bajos)
-db 0x00    ; Base (8 bits siguientes)
-db 0x9A    ; Tipo de descriptor (código ejecutable, acceso presente, nivel de privilegio 0)
-db 0xCF    ; Límite (4 bits más altos) y atributos (granularidad, tamaño de operando)
-
-; Descriptor de datos (base = 0, límite = 4 GB, acceso = 0x92)
-dw 0xFFFF  ; Límite (16 bits más bajos)
-dw 0x0000  ; Base (16 bits más bajos)
-db 0x00    ; Base (8 bits siguientes)
-db 0x92    ; Tipo de descriptor (datos, acceso presente, nivel de privilegio 0)
-db 0xCF    ; Límite (4 bits más altos) y atributos (granularidad, tamaño de operando)
-
-gdt_end:
+    my_variable db 0   ; Variable en el segmento de datos (inicializada a 0)
 ```
 Este código es un programa en lenguaje ensamblador que configura la CPU para cambiar al Modo Protegido. Aquí está la explicación de cada línea, que sea diferente al codigo antes presentado:
 
-- `modo_protegido:`: Esta es la etiqueta a la que se salta después de habilitar el Modo Protegido.
-- `mov ax, 0x10`: Carga el índice del descriptor de segmento de código en el registro AX.
-- `mov ds, ax` y `mov es, ax`, `mov fs, ax`, `mov gs, ax`: Configuran los registros de segmento de datos (DS, ES, FS, GS) con el descriptor de segmento de código.
-- `mov ax, 0x18`: Carga el índice del descriptor de segmento de datos en el registro AX.
-- `mov ss, ax`: Configura el registro de segmento de pila (SS) con el descriptor de segmento de datos.
-- `hlt`: Detiene la ejecución de la CPU.
-- `section .data`: Define el inicio de la sección de datos, que es donde se almacenan las variables y constantes.
-- `gdt_start:`: Esta es la etiqueta de inicio de la GDT.
-- Las siguientes líneas definen dos descriptores de segmento en la GDT, uno para el segmento de código y otro para el segmento de datos. Cada descriptor de segmento especifica la base y el límite del segmento, así como los atributos de acceso y otros atributos.
-- `gdt_end:`: Esta es la etiqueta de final de la GDT.
+- **`protected_mode:`** Esta es la etiqueta para el código que se ejecutará en modo protegido.
+- **`mov ax, 0x18`** Carga el valor **`0x18`** en el registro **`ax`**. Este valor representa el selector de segmento de datos en la GDT.
+- **`mov ds, ax`** Carga el valor de **`ax`** en el registro de segmento de datos (**`ds`**). Ahora **`ds`** apunta al descriptor de segmento de datos.
+- **`mov dword [my_variable], 42`** Intenta escribir el valor **`42`** en la variable **`my_variable`**. Sin embargo, como hemos cambiado los bits de acceso del segmento de datos a solo lectura, esto generará una excepción.
+- **`mov eax, 1`** Carga el valor **`1`** en el registro **`eax`**. Prepara el código para salir del programa.
+- **`int 0x80`** Realiza una interrupción del sistema con el número **`0x80`**. Esto invoca una llamada al sistema para finalizar el programa.
+- **`section .data`** Define una nueva sección llamada **`.data`**. En esta sección, se pueden declarar variables y datos estáticos.
+- **`my_variable db 0`** Declara una variable llamada **`my_variable`** en la sección de datos. La variable se inicializa con el valor **`0`**.
+
 
 Al cambiar los bits de acceso del segmento de datos para que sea solo de lectura, e intentando escribir, se hace una pequeña modificación en el codigo anterior por:
 ```assembly
-modo_protegido:
-; Configurar el descriptor de código
+protected_mode:
+    ; Set up a valid stack
+    mov ax, 0x10  ; Assuming 0x10 is a valid stack segment selector
+    mov ss, ax
+    mov esp, stack_space
+    
+    ; ...
+    
+    ; Intentar escribir en el segmento de datos (esto generará una excepción)
+    mov dword [my_variable], 42
+
+    ; Salir del programa
+    mov eax, 1
+    int 0x80
+
+section .bss
+    stack_space resb 4096  ; Reserve 4096 bytes for the stack
+    
 ; ...
-
-; Configurar el descriptor de datos
-; ...
-
-; Intentar escribir en una dirección de memoria dentro del segmento de datos
-mov dword [0x1000], 0xDEADBEEF  ; Esto generará una excepción GPF
-
-; Salir del programa
-hlt
 ```
-Y se verifica en gdb con el siguiente comando por terminal:
-```bash
+Se oberva en este código establece el modo protegido, configura la pila, intenta escribir en una variable de solo lectura y luego sale del programa. La sección **`.bss`** se utiliza para reservar espacio para la pila. A continuacion su explicacion linea por linea:
+
+- **`protected_mode:`** Esta es la etiqueta para el código que se ejecutará en modo protegido.
+- **`mov ax, 0x10`** Mueve el valor hexadecimal **`0x10`** al registro **`ax`**. Este valor se utiliza como selector de segmento para cargar el descriptor de segmento de la pila (stack).
+- **`mov ss, ax`** Carga el valor de **`ax`** en el registro de segmento de pila (**`ss`**). Establece el segmento de pila para que apunte al descriptor de segmento correspondiente.
+- **`mov esp, stack_space`** Carga la dirección de memoria de la variable **`stack_space`** en el registro de puntero de pila (**`esp`**). Esto establece el puntero de pila en la dirección de inicio del área reservada para la pila.
+- **`mov dword [my_variable], 42`** Intenta escribir el valor **`42`** en la variable **`my_variable`**. Sin embargo, como hemos cambiado los bits de acceso del segmento de datos a solo lectura, esto generará una excepción.
+- **`mov eax, 1`** Carga el valor **`1`** en el registro **`eax`**. Prepara el código para salir del programa.
+- **`int 0x80`** Realiza una interrupción del sistema con el número **`0x80`**. Esto invoca una llamada al sistema para finalizar el programa.
+- **`section .bss`** Define una nueva sección llamada **`.bss`**. En esta sección, se pueden reservar áreas de memoria para variables no inicializadas (como la pila).
+- **`stack_space resb 4096`** Reserva 4096 bytes (4 KB) para el espacio de la pila. La variable **`stack_space`** se declara como un bloque de bytes sin inicializar.
+
+
+Una vez estructurados estos codigos, realizamos los siguientes comandos por terminal:
+```
 nasm -f elf32 mp_dmd_bl.asm -o mp_dmd_bl.o
-ld -m elf_i386 -o mp_dmd_bl mp_dmd_bl.o
+ld -m elf_i386 mp_dmd_bl.o -o mp_dmd_bl
 ```
+Inicializando entonces por una terminal, el siguiente comando para abrir QEMU y trabajar en un ambiente controlado:
+```bash
+federica@federica-HR14:~/Documents/Sistemas_de_Computacion/SistDeCompTP3/src$ qemu-system-i386 -s -S mp_dmd_bl
+WARNING: Image format was not specified for 'mp_dmd_bl' and probing guessed raw.
+         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+         Specify the 'raw' format explicitly to remove the restrictions.
+```
+
+En simultaneo, en otra terminal, realizar la depuración del archivo ejecutable mp_dmd_bl, con el comando gdb mp_dmd_bl, seguido de breakpoints en las etiquetas de _start y protected_mode, observamos en pantalla lo siguiente:
+![Imagen 8](/img/img8.jpg)
+![Imagen 9](/img/img9.jpg)
+
+
+En el modo protegido, los registros de segmento se cargan con selectores de segmento para acceder a diferentes áreas de memoria. Cada selector apunta a un descriptor de segmento en la GDT o LDT, que contiene información sobre los límites, atributos y ubicación del segmento. Esto permite una gestión más flexible y segura de la memoria en modo protegido.
+
+
+Cada selector de segmento es un valor de 16 bits que apunta a una entrada en la Tabla de Descriptores Globales (GDT) o en la Tabla de Descriptores Locales (LDT). Estas tablas contienen los descriptores de segmento, que definen las características y límites de los segmentos de memoria.
+
+
+Estos registros de segmentos se cargan de la siguiente manera, según el tipo que sean:
+
+1. **CS (Segmento de Código)**:
+    - El registro **`CS`** (Code Segment) almacena el selector de segmento para el segmento de código.
+    - El segmento de código contiene las instrucciones ejecutables del programa.
+    - El selector de segmento de código se carga en **`CS`** durante la transición a modo protegido.
+    - Por ejemplo, **`mov ax, 0x08`** carga el selector de segmento de código en **`ax`**, y luego **`mov cs, ax`** carga ese valor en **`CS`**.
+2. **DS (Segmento de Datos)**:
+    - El registro **`DS`** (Data Segment) almacena el selector de segmento para el segmento de datos.
+    - El segmento de datos almacena variables y datos estáticos.
+    - El selector de segmento de datos se carga en **`DS`**.
+    - Por ejemplo, **`mov ax, 0x10`** carga el selector de segmento de datos en **`ax`**, y luego **`mov ds, ax`** carga ese valor en **`DS`**.
+3. **ES, FS y GS**:
+    - Estos registros también almacenan selectores de segmento para segmentos de datos adicionales.
+    - Pueden utilizarse para acceder a otros segmentos de datos según sea necesario.
+    - Por ejemplo, **`mov ax, 0x20`** carga el selector de segmento en **`ax`**, y luego **`mov es, ax`** carga ese valor en **`ES`**.
+4. **SS (Segmento de Pila)**:
+    - El registro **`SS`** (Stack Segment) almacena el selector de segmento para el segmento de pila.
+    - El segmento de pila se utiliza para almacenar la pila de llamadas y los datos locales.
+    - Durante la configuración de la pila, se carga el selector de segmento de pila en **`SS`**.

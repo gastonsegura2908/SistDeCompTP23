@@ -2,28 +2,41 @@ section .text
     global _start
 
 _start:
-    ; Código ejecutable aquí
+    ; Cargar el descriptor de segmento de código
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
-section .data
-    my_variable db 42   ; Ejemplo de variable en el segmento de datos
+    ; Habilitar el bit PE (modo protegido) en el registro CR0
+    mov eax, cr0
+    or eax, 0x1
+    mov cr0, eax
 
-section .bss
-    ; Variables sin valores iniciales (se rellenan con ceros)
-    ; No ocupan espacio en el archivo objectfile
+    ; Saltar al código en modo protegido
+    jmp 0x08:protected_mode
 
-section .text
-    ; Más código ejecutable aquí
+protected_mode:
+    ; Cambiar los bits de acceso del segmento de datos a solo lectura
+    ; Esto se hace modificando el descriptor de segmento correspondiente en la GDT
+    ; Por simplicidad, asumiremos que el descriptor de datos está en el índice 0x18 en la GDT
 
-section .data
-    ; Más datos aquí
+    ; Cargar el selector de segmento de datos
+    mov ax, 0x18
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
-section .text
-    ; Más código aquí
+    ; Intentar escribir en el segmento de datos (esto generará una excepción)
+    mov dword [my_variable], 42
 
-section .data
-    ; Más datos aquí
+    ; Código en modo protegido
 
-section .text
-    ; Final del programa
+    ; Salir del programa
     mov eax, 1
     int 0x80
+
+section .data
+    my_variable db 0   ; Variable en el segmento de datos (inicializada a 0)
